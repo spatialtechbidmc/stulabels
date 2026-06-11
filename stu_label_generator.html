@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STU Sample Label Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: #f5f6f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 3rem 1rem;
+  }
+
+  .container {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e4e9;
+    padding: 2rem;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .header { margin-bottom: 1.75rem; }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #1F4E79;
+    margin-bottom: 6px;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111;
+    margin-bottom: 4px;
+  }
+  .header p {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  .divider { border: none; border-top: 1px solid #e2e4e9; margin: 1.5rem 0; }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 5px;
+  }
+  .field input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    font-size: 14px;
+    color: #111;
+    background: #fff;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .field input:focus { border-color: #1F4E79; box-shadow: 0 0 0 3px rgba(31,78,121,0.08); }
+  .field input::placeholder { color: #9ca3af; }
+
+  .btn {
+    width: 100%;
+    padding: 10px;
+    background: #1F4E79;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: #17406a; }
+  .btn:active { background: #0f2d4d; }
+
+  .preview-section { display: none; margin-top: 1.75rem; }
+  .preview-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+  }
+
+  .label-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+  }
+
+  /* The actual label — 2x1in at 96dpi = 192x96px */
+  .label {
+    width: 192px;
+    height: 96px;
+    background: #fff;
+    border: 1.5px solid #ccc;
+    border-radius: 4px;
+    display: flex;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+  .label-qr {
+    width: 90px;
+    min-width: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    background: #fff;
+  }
+  .label-qr canvas, .label-qr img { display: block; width: 80px !important; height: 80px !important; }
+  .label-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6px 7px 6px 4px;
+    border-left: 1px solid #e5e7eb;
+    gap: 2px;
+    overflow: hidden;
+  }
+  .label-id {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #1F4E79;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.2px;
+  }
+  .label-client {
+    font-size: 8px;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .label-date {
+    font-size: 7px;
+    color: #9ca3af;
+    margin-top: 3px;
+  }
+  .label-stu {
+    font-size: 6.5px;
+    color: #c0c4cc;
+    margin-top: auto;
+  }
+
+  .print-btn {
+    width: 100%;
+    padding: 10px;
+    background: #fff;
+    color: #1F4E79;
+    border: 1.5px solid #1F4E79;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .print-btn:hover { background: #f0f5fa; }
+
+  .error {
+    font-size: 12px;
+    color: #dc2626;
+    margin-top: 6px;
+    display: none;
+  }
+
+  @media print {
+    html, body { margin: 0; padding: 0; background: #fff; }
+    body * { visibility: hidden; }
+    #print-target, #print-target * { visibility: visible; }
+    #print-target {
+      position: fixed;
+      top: 0; left: 0;
+      width: 2in; height: 1in;
+      margin: 0; padding: 0;
+    }
+    .label {
+      width: 2in !important;
+      height: 1in !important;
+      border-radius: 0 !important;
+      border: none !important;
+    }
+    .label-qr { width: 0.9in !important; min-width: 0.9in !important; }
+    .label-id { font-size: 10pt !important; }
+    .label-client { font-size: 8pt !important; }
+    .label-date { font-size: 7pt !important; }
+    .label-stu { font-size: 6pt !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-eyebrow">Spatial Technologies Unit · BIDMC</div>
+    <h1>Sample Label Generator</h1>
+    <p>Fill in the project details and paste the Notion page URL to generate a 2×1 in thermal label.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="field">
+    <label>iLabs / Project ID</label>
+    <input type="text" id="ilabs-id" placeholder="e.g. STU-AAA-167" />
+  </div>
+  <div class="field">
+    <label>PI / Client name</label>
+    <input type="text" id="client-name" placeholder="e.g. Smith Lab" />
+  </div>
+  <div class="field">
+    <label>Notion project page URL <span style="color:#9ca3af;font-weight:400">(for QR code)</span></label>
+    <input type="text" id="notion-url" placeholder="https://notion.so/..." />
+  </div>
+
+  <div class="error" id="error-msg">Please fill in all fields.</div>
+  <button class="btn" onclick="generate()">Generate label</button>
+
+  <div class="preview-section" id="preview">
+    <hr class="divider">
+    <div class="preview-label">Preview</div>
+    <div class="label-wrap">
+      <div class="label" id="print-target">
+        <div class="label-qr"><div id="qr-canvas"></div></div>
+        <div class="label-body">
+          <div class="label-id" id="lbl-id"></div>
+          <div class="label-client" id="lbl-client"></div>
+          <div class="label-date" id="lbl-date"></div>
+          <div class="label-stu">Spatial Technologies Unit · BIDMC</div>
+        </div>
+      </div>
+    </div>
+    <button class="print-btn" onclick="window.print()">🖨 Print label</button>
+  </div>
+</div>
+
+<script>
+function generate() {
+  const id = document.getElementById('ilabs-id').value.trim();
+  const client = document.getElementById('client-name').value.trim();
+  const url = document.getElementById('notion-url').value.trim();
+  const err = document.getElementById('error-msg');
+
+  if (!id || !client || !url) {
+    err.style.display = 'block';
+    err.textContent = 'Please fill in all three fields.';
+    return;
+  }
+  err.style.display = 'none';
+
+  document.getElementById('lbl-id').textContent = id;
+  document.getElementById('lbl-client').textContent = client;
+  document.getElementById('lbl-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const qrContainer = document.getElementById('qr-canvas');
+  qrContainer.innerHTML = '';
+
+  new QRCode(qrContainer, {
+    text: url,
+    width: 80,
+    height: 80,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  document.getElementById('preview').style.display = 'block';
+  document.getElementById('preview').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>
